@@ -15,6 +15,31 @@
 | A4 | Source is likely 208Y/120 V 3-phase 4-wire (or 480Y/277 V with a transformer) **[VERIFY]**. Now confirm against the MCU input rating | Unsure | Decides if one feeder can serve everything |
 | A5 | Run length unknown. Now two lengths matter: source to panel/MCU, and MCU to motor | Unknown | Voltage drop can control wire size; motor-cable length can be limited by the drive |
 
+### 0A. Sizing basis for initial review (rev 3: 5 HP motor, other loads under 5 A)
+
+These values are **placeholders chosen so the schedules in Section 4 are complete**. Every row marked ASSUMED must be replaced with nameplate/data-sheet values. The design is conservative: if the real values are lower, the sizes below still work. If they are higher, re-run the numbers.
+
+| # | Item | Assumed value | Status | Basis / how it was derived |
+|---|---|---|---|---|
+| B1 | Source system | 208Y/120 V, 3-phase, 4-wire + EGC, 60 Hz | ASSUMED | Common outdoor-structure source. Matches A4 |
+| B2 | Azimuth motor | **5 HP, 208 V, 3-phase, FLA 16.7 A** | ASSUMED (HP not confirmed) | NEC Table 430.250, 5 HP at 208 V |
+| B3 | MCU input | 208 V, 3-phase, **18 A rated input**, **30 A max OCPD** | ASSUMED | Typical 5 HP drive input is about 1.05 to 1.15 times motor FLA. Replace with MCU nameplate |
+| B4 | Other loads | **2 loads, 115 V, 1-phase, 5 A each** (the "under 5 A" limit, used as the design value) | ASSUMED | Hard-wired (not receptacles), treated as **continuous** (125%) to stay conservative |
+| B5 | Feeder one-way length | **150 ft** (includes about 40 ft of vertical rise) | ASSUMED | Placeholder from the earlier worked example. Controls voltage drop |
+| B6 | Panel location | **PNL-OA at the structure**, within 25 ft of the MCU | ASSUMED | Keeps the branch runs short |
+| B7 | MCU location | **At the structure beside the drive**, in a NEMA 4X enclosure | ASSUMED (A3c) | Makes the MCU-to-motor cable about 25 ft (limit assumed 50 ft) |
+| B8 | Branch lengths | B-1 and B-2: 50 ft. B-3: 25 ft. M-1: 25 ft | ASSUMED | Voltage drop and conduit lengths |
+| B9 | Feedback and control | Encoder (shielded), 2 limit switches, motor thermal (PTC). **No holding brake** | ASSUMED | Replace with the vendor's cable list. A brake adds a 2-conductor power circuit |
+| B10 | Rotating joint | **Cable wrap/loop**, rotation not more than 360 degrees, no slip ring | ASSUMED | If a slip ring is used, the vendor supplies it and the wiring changes at that point |
+| B11 | Ambient | **40 deg C** design ambient, outdoor, marine air | ASSUMED | NEC Table 310.15(B)(1) correction factor of 0.91 on the 90 deg C column |
+| B12 | Available fault current | **10 kA or less** at PNL-OA | ASSUMED | Breakers and the panel are specified at 10 kAIC minimum. MCU SCCR and fuse type must be confirmed |
+| B13 | Conductors | Copper, **THWN-2**, stranded, minimum #12 | ASSUMED (Navy practice **[VERIFY]**) | Matches Section 3.1 |
+| B14 | Raceway | **RMC** exposed on the structure, **LFMC** for final connections, minimum 3/4 in | ASSUMED (marine: confirm PVC-coated or stainless) | Matches Section 2 |
+| B15 | Disconnects | Lockable, within sight of the MCU. No separate motor disconnect if the MCU disconnect is in sight of the motor (not more than 50 ft) | ASSUMED **[VERIFY 430.102]** | Add a motor disconnect if line of sight fails |
+| B16 | Voltage drop limits | 3% feeder, 3% branch, **5% total** | ASSUMED (Navy may be stricter **[VERIFY]**) | Matches Section 3.2 |
+
+If the motor turns out to be **460 V** instead, the 5 HP FLA is 7.6 A. The feeder would then need a **480 V source or a transformer**, and every size in Section 4.3 drops to #12 to #10 or smaller. Treat that as a rev change, not a tweak.
+
 ## 1. Recommended approach: one feeder + a local outdoor panel
 
 > **Rev 2 change:** the motor is an azimuth drive fed by an MCU. Power goes **source -> panel -> MCU -> motor**. Size and protect the supply from the **MCU's input ratings**, and treat the MCU-to-motor cable and the control/feedback wiring as separate circuits (Section 1A). If the MCU data sheet is not in hand yet, the original "works for any voltage/phase" approach below still applies as a fallback.
@@ -94,13 +119,23 @@ Also include:
 | 5 | 56 | 28 | 16.7 | 15.2 | 7.6 |
 | 10 | n/a | 50 | 30.8 | 28 | 14 |
 
-### 3.4 Worked example (placeholder numbers; replace with real ones)
-- Two 115 V loads at **15 A** each, one MCU with a **208 V, 3-ph, 20 A rated input** (placeholder) driving an azimuth motor with **10 A FLA** (placeholder).
-- MCU: 20 x 1.25 = **25 A**. Others: 15 + 15 = 30 A. Conservative feeder total: **~55 A** (a phase-balanced calculation can be lower).
-- Starting point: **#6 Cu THWN-2** (75 °C ampacity 65 A), 60 A breaker (must not exceed the MCU's max OCPD), **#10 Cu EGC** (Table 250.122, 60 A).
-- Conduit fill: 4 x #6 THWN-2 (0.0507 in2 each) + 1 x #10 (0.0211 in2) = 0.224 in2. 3/4 in RMC at 40% fill = 0.213 in2 (too tight). Use **1 in RMC** (0.346 in2 at 40%), or **1-1/4 in** for pulling room and spare capacity. Check areas in NEC Ch. 9 Tables 4 and 5.
-- Voltage drop at 150 ft one-way, 55 A, #6: 1.732 x 55 x 0.49 x 150 / 1000 = **7.0 V = 3.4% of 208 V**. Marginal, so **#4** (about 2.1%) is the safer choice.
-- MCU-to-motor (separate): 10 x 1.25 = 12.5 A, so **#12 Cu** minimum (20 A), 3 conductors + ground, in its own conduit. Upsize if the motor cable is long, per the manufacturer's length and drop limits.
+### 3.4 Worked example (uses the Section 0A assumptions: 5 HP motor, 5 A loads)
+
+**Loads:** MCU input 18 A (208 V, 3-ph, B3), two 115 V loads at 5 A each (B4), motor FLA 16.7 A (B2).
+
+1. **MCU branch (B-3):** 18 x 1.25 = **22.5 A** (NEC 430.122). #10 Cu THWN-2: 90 deg C ampacity 40 A x 0.91 (40 deg C ambient) = 36.4 A, and the 75 deg C terminal limit is 35 A. Both are above 22.5 A. OCPD: **30 A, 3-pole** (the assumed MCU maximum). EGC **#10** (Table 250.122, 30 A). #12 would meet ampacity, but #10 gives margin and avoids a small-conductor question.
+2. **115 V branches (B-1, B-2):** 5 x 1.25 = 6.25 A. **20 A, 1-pole breaker, 2 #12 + #12 EGC**. Voltage drop at 50 ft: 2 x 5 x 2.0 x 50 / 1000 = 1.0 V = **0.8% of 120 V**.
+3. **Feeder (F-1):** 22.5 A (MCU at 125%) + 6.25 + 6.25 (loads at 125%) = **35 A** (conservative, not phase-balanced).
+   - Breaker: **40 A, 3-pole**. Check 430.62: largest branch device (30 A) + other loads (5 + 5 A) = 40 A, so 40 A is permitted.
+   - Conductors: ampacity-wise #8 would work (50 A at 75 deg C). **Voltage drop controls**: at 150 ft one-way, 35 A, 3-ph, #8: 1.732 x 35 x 0.78 x 150 / 1000 = 7.1 V = **3.4%** (over the 3% target). **#6**: 1.732 x 35 x 0.49 x 150 / 1000 = 4.5 V = **2.1%**. Use **4 #6 THWN-2** (3 phases + neutral).
+   - Derating check on #6: 75 A (90 deg C) x 0.91 x 0.80 (4 conductors counted) = 54.6 A, above 35 A. The 75 deg C terminal limit is 65 A, which is also above 35 A.
+   - EGC: **#8**. A 40 A device needs #10 (Table 250.122), and increasing the phase conductors from #8 to #6 requires the EGC to grow in proportion (250.122(B)), which gives #8.
+   - Conduit fill: 4 x #6 (0.0507 in2) + 1 x #8 (0.0366 in2) = **0.239 in2**. 1 in RMC (0.355 in2 at 40%) passes at about 27%. Use **1-1/4 in RMC** (0.610 in2 at 40%, about 16% fill) for pulling room up the vertical rise and spare capacity.
+4. **MCU-to-motor (M-1):** 16.7 x 1.25 = **20.9 A** (NEC 430.22). #12 meets ampacity (25 A at 75 deg C), but the drive output is a harsh environment and the manufacturer's cable may be #10. Use **#10 VFD-rated shielded cable (3 power + 3 symmetrical grounds)**. Voltage drop at 25 ft: 1.732 x 16.7 x 1.2 x 25 / 1000 = 0.9 V = **0.4%**. Shielded VFD cable has a larger outside diameter (assume 0.8 in), so use **1-1/4 in RMC** (single cable at up to 53% fill). Verify the real cable OD.
+5. **Total voltage drop (worst case):** feeder 2.1% + MCU branch (25 ft, #10, 18 A: 1.732 x 18 x 1.2 x 25 / 1000 = 0.9 V = 0.4%) = **2.5% of 208 V**. Under the 5% total. This is conservative, because the feeder is calculated at 35 A and the real running current is about 18 A.
+6. **Connected load:** MCU 18 A x 208 V x 1.732 = **6.5 kVA** + 2 x 0.6 kVA = **7.7 kVA** (21 A at 208 V). The 40 A feeder has about 47% headroom for growth.
+
+> Re-run these numbers if the motor is not 5 HP, if the MCU input is above 18 A, if the run is longer than 150 ft, or if the supply voltage differs.
 
 ## 4. Simple CYA general notes for the Revit sheet
 
@@ -125,17 +160,131 @@ Adjust the wording to match the project's note style. Put them in a **General No
 14. **Existing conditions** are from record drawings and may not be exact. Notify the engineer if conditions differ.
 
 ### 4.2 Assumption note (very useful CYA)
-> **ASSUMPTIONS:** (1) Source is 208Y/120 V, 3-phase, 4-wire. (2) MCU is [__] (model), [__] V, [__]-phase, [__] A rated input, [__] A max OCPD. (3) Azimuth motor is [__] HP, [__] V, [__] A FLA, located [__] ft from the MCU. (4) Two 115 VAC loads at [__] A each. (5) One-way feeder length is [__] ft. (6) Ambient temperature is [__] deg C. **If any of these change, conductor, conduit, and protective device sizes shall be re-verified.**
 
-### 4.3 Suggested Revit schedule / detail table (placeholders)
-| Tag | From | To | Conduit | Conductors | EGC | Notes |
+Place this on the sheet. The bracketed values are the Section 0A assumptions. Replace each with nameplate data as it is confirmed, and delete "ASSUMED" from the item once verified.
+
+> **ASSUMPTIONS (INITIAL, FOR REVIEW):**
+> 1. Source is **208Y/120 V, 3-phase, 4-wire**, available at [existing panel / spare breaker, TBD]. Available fault current is assumed **10 kA or less** at the structure panel (PNL-OA).
+> 2. Azimuth drive MCU (MCU-1) is [model TBD], **208 V, 3-phase, 18 A rated input, 30 A maximum OCPD**. MCU is located **at the structure beside the drive**, in a NEMA 4X enclosure.
+> 3. Azimuth motor (M-1) is **5 HP, 208 V, 3-phase, 16.7 A FLA** (NEC Table 430.250), located **about 25 ft** from the MCU. No holding brake. Feedback is a shielded encoder, two limit switches, and a motor thermal sensor.
+> 4. Two 115 VAC, single-phase loads (L-1, L-2) of **5 A or less each**, hard-wired (not receptacles), treated as continuous.
+> 5. One-way feeder length is **150 ft** (including about 40 ft of vertical rise). Branch lengths: B-1 and B-2 50 ft, B-3 25 ft.
+> 6. Design ambient is **40 deg C**, outdoor, marine atmosphere. Copper THWN-2 conductors in RMC, LFMC at final connections.
+> 7. Voltage drop is limited to **3% on the feeder and 5% overall**.
+> 8. Azimuth rotation is not more than **360 degrees**, using a cable wrap/loop (no slip ring).
+>
+> **All sizes shown are based on these assumptions. If any assumption changes, conductor, conduit, enclosure, and protective device sizes shall be re-verified before ordering or installation.**
+
+### 4.3 Suggested Revit schedules (complete set for initial review)
+
+All values come from Section 0A and the Section 3.4 calculations. Items marked **TBD** need vendor or site data. Keep the tags below identical on the plan, the schedules, and the ACADE diagram.
+
+#### 4.3.1 Equipment tags and legend
+
+| Tag | Description | Rating (assumed) | Location | Enclosure |
+|---|---|---|---|---|
+| SRC | Existing source panel or switchboard (TBD) | 208Y/120 V, 3-ph, 4-wire | Existing building (TBD) | Existing |
+| F-1-DS | Feeder breaker at the source | 40 A, 3-pole, 10 kAIC minimum | At SRC | Existing |
+| PNL-OA | Outdoor panelboard | 208Y/120 V, 3-ph, 4-wire, 100 A bus, 40 A main breaker, 12 spaces, 10 kAIC | At the structure | NEMA 4X (stainless or FRP) |
+| DS-1 | Disconnect for MCU-1 | 3-pole, 30 A, lockable (fused only if the MCU requires it) | In sight of MCU-1 | NEMA 4X |
+| SPD-1 | Surge protective device at PNL-OA | 3-ph, 208Y/120 V, Type 1 or 2 (TBD per lightning criteria) | At PNL-OA | NEMA 4X |
+| MCU-1 | Azimuth motor controller unit | 208 V, 3-ph, 18 A input, 30 A max OCPD | At the structure beside the drive | NEMA 4X |
+| M-1 | Azimuth drive motor | 5 HP, 208 V, 3-ph, 16.7 A FLA | On the structure | Per motor |
+| L-1 | 115 V load 1 | 115 V, 1-ph, 5 A or less | TBD | Per load |
+| L-2 | 115 V load 2 | 115 V, 1-ph, 5 A or less | TBD | Per load |
+| JB-1 | Junction/pull box at the rotating joint | Sized for cable wrap (TBD) | At the azimuth axis | NEMA 4X |
+| GND-1 | Structure grounding connection | Per structure grounding drawings | At PNL-OA and MCU-1 | N/A |
+
+#### 4.3.2 Circuit schedule (feeder, branch, drive output, signal)
+
+| Tag | From | To | Voltage / phase | Load (A) | OCPD | Phase conductors | Neutral | EGC | Length (ft) | Voltage drop | Notes |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| F-1 | SRC | PNL-OA | 208Y/120 V, 3-ph | 35 (calc, 125% basis) | 40 A / 3P | 3 #6 | 1 #6 | 1 #8 | 150 | 2.1% | Voltage drop controls the size (#8 would be 3.4%). Verify the length in the field |
+| B-1 | PNL-OA ckt 1 | L-1 | 120 V, 1-ph | 5 | 20 A / 1P | 1 #12 | 1 #12 | 1 #12 | 50 | 0.8% | On phase A. Hard-wired |
+| B-2 | PNL-OA ckt 3 | L-2 | 120 V, 1-ph | 5 | 20 A / 1P | 1 #12 | 1 #12 | 1 #12 | 50 | 0.8% | On phase B. Hard-wired |
+| B-3 | PNL-OA ckt 2-4-6 | DS-1, then MCU-1 | 208 V, 3-ph | 18 (22.5 at 125%) | 30 A / 3P | 3 #10 | none | 1 #10 | 25 | 0.4% | Size and OCPD to be set from the MCU nameplate (TBD). No neutral to the MCU |
+| M-1 | MCU-1 | Azimuth motor | 208 V, 3-ph (drive output) | 16.7 (20.9 at 125%) | MCU provides overload (430.126) | 3 #10 (shielded VFD cable) | none | 3 symmetrical grounds (in the cable) | 25 | 0.4% | Own raceway. Use the manufacturer's cable. Verify max length (50 ft assumed) |
+| S-1 | MCU-1 | Encoder, limit switches, thermal sensor | Low voltage | 1 or less | n/a | Vendor shielded multi-conductor cable | n/a | Drain/shield per vendor | 25 | n/a | Separate raceway from M-1. Terminate shields 360 degrees |
+| S-2 | MCU-1 | Control/comms (E-stop, enable, comms) | Low voltage (24 V DC typical, TBD) | 1 or less | n/a | Per vendor / controls interface | n/a | Per vendor | TBD | n/a | May share a raceway with S-1 only if the manufacturer allows. Control source TBD |
+| G-1 | PNL-OA ground bar | Structure ground | n/a | n/a | n/a | n/a | n/a | #6 Cu bare or insulated (TBD per structure grounding design) | 25 | n/a | Bond MCU-1, M-1 frame, PNL-OA, and conduits. Size per the structure grounding/lightning drawings (TBD) |
+
+#### 4.3.3 Raceway schedule (conduit and fill)
+
+| Conduit tag | Carries | Conduit | Wires inside | Fill (40% limit) | Termination | Notes |
 |---|---|---|---|---|---|---|
-| F-1 | Source | Panel at structure | 1-1/4" RMC | 4 #4 THWN-2 | 1 #8 | Feeder (verify) |
-| B-1 | Panel | 115 V load 1 | 3/4" LFMC final | 2 #12 | 1 #12 | 20 A |
-| B-2 | Panel | 115 V load 2 | 3/4" LFMC final | 2 #12 | 1 #12 | 20 A |
-| B-3 | Panel | MCU input | 3/4" RMC | 3 #10 (per MCU rating) | 1 #10 | Size/OCPD per MCU nameplate (TBD) |
-| M-1 | MCU | Azimuth motor | 3/4" RMC, LFMC final | 3 #12 (or VFD cable) | 1 #12 | Drive output; own conduit; length limit TBD |
-| S-1 | MCU | Azimuth drive (encoder, limits, brake) | 3/4" RMC, separate | Per vendor cable | n/a | Signal/control; separate from M-1; spare conduit |
+| C-1 | F-1 | **1-1/4" RMC** (PVC-coated or stainless if marine **[VERIFY]**) | 4 #6 + 1 #8 THWN-2 | 0.239 in2, about 16% | Threaded, listed wet-location fittings | Exposed on the structure. Expansion fittings at structural joints, drain fittings at low points, vertical supports per 300.19 |
+| C-2 | B-1 | **3/4" RMC**, 3/4" LFMC final to L-1 | 2 #12 + 1 #12 THWN-2 | 0.040 in2, about 7.5% | Listed fittings | May share C-2 with B-2 if the field prefers one conduit (4 #12 + 1 #12, about 12.5% fill) |
+| C-3 | B-2 | **3/4" RMC**, 3/4" LFMC final to L-2 | 2 #12 + 1 #12 THWN-2 | 0.040 in2, about 7.5% | Listed fittings | Same as C-2 |
+| C-4 | B-3 | **3/4" RMC** | 3 #10 + 1 #10 THWN-2 | 0.084 in2, about 16% | PNL-OA to DS-1 to MCU-1 | Keep separate from M-1 and S-1 |
+| C-5 | M-1 | **1-1/4" RMC**, LFMC final to the motor (listed fittings) | 1 shielded VFD cable, 3 #10 + 3 grounds (assumed OD 0.8 in) | Single cable at 53% fill limit | MCU-1 to M-1 | Own raceway. Maintain shield and ground continuity. Cable wrap across the rotating joint |
+| C-6 | S-1 (and S-2 if allowed) | **3/4" RMC** | Vendor encoder/limit/thermal cable | Per cable OD | MCU-1 to the drive | Cross power conduits at right angles. No shared raceway with C-4 or C-5 |
+| C-7 | Spare | **3/4" RMC**, capped | Pull string only | 0% | PNL-OA to JB-1 (or the nearest structure point) | Spare for future access. Label "SPARE" at both ends |
+
+All RMC to be **stainless or PVC-coated where marine exposure requires**. Minimum conduit size 3/4".
+
+#### 4.3.4 Panel schedule: PNL-OA (208Y/120 V, 3-ph, 4-wire, 100 A bus, 40 A main, 10 kAIC)
+
+| Ckt | Description | Load (VA) | Phase | Breaker | Wire | Ckt | Description | Load (VA) | Phase | Breaker | Wire |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | L-1 (B-1) | 600 | A | 20 A / 1P | #12 | 2 | MCU-1 (B-3) | 2,161 | A | 30 A / 3P | #10 |
+| 3 | L-2 (B-2) | 600 | B | 20 A / 1P | #12 | 4 | (MCU-1) | 2,161 | B | (3P) | #10 |
+| 5 | SPARE | 0 | C | 20 A / 1P | n/a | 6 | (MCU-1) | 2,161 | C | (3P) | #10 |
+| 7 | SPACE | | A | n/a | | 8 | SPACE | | A | n/a | |
+| 9 | SPACE | | B | n/a | | 10 | SPACE | | B | n/a | |
+| 11 | SPACE | | C | n/a | | 12 | SPACE | | C | n/a | |
+
+| Phase | Connected load (VA) | Current (A) |
+|---|---|---|
+| A | 2,761 | about 23 at 120 V (MCU phase current 18 A, plus 5 A) |
+| B | 2,761 | about 23 |
+| C | 2,161 | 18 |
+| **Total** | **7,683 VA** | **21.3 A at 208 V (balanced equivalent)** |
+
+Feeder design current: **35 A** (22.5 A MCU at 125% + 6.25 + 6.25 for 115 V loads at 125%). Main breaker 40 A.
+
+#### 4.3.5 Voltage-drop and sizing summary
+
+| Run | Current used | Length (ft) | Conductor | Voltage drop (V) | Voltage drop (%) | Limit |
+|---|---|---|---|---|---|---|
+| F-1 | 35 A | 150 | #6 | 4.5 | 2.1% | 3% |
+| B-1 / B-2 | 5 A | 50 | #12 | 1.0 | 0.8% | 3% |
+| B-3 | 18 A | 25 | #10 | 0.9 | 0.4% | 3% |
+| M-1 | 16.7 A | 25 | #10 | 0.9 | 0.4% | Vendor limit |
+| **Worst path total (F-1 + B-3)** | | | | | **2.5%** | **5%** |
+
+#### 4.3.6 Keynote legend (for the plan view)
+
+| Key | Note |
+|---|---|
+| 1 | Provide outdoor panelboard PNL-OA, NEMA 4X, mounted on the structure per structural approval. Label per Note 11. |
+| 2 | Route feeder F-1 in 1-1/4" RMC up the structure. Provide expansion fittings at joints and a drain at the low point. |
+| 3 | Provide lockable disconnect DS-1 in sight of MCU-1. |
+| 4 | Provide MCU-1 per vendor data. Size supply, OCPD, and cable per the MCU nameplate. |
+| 5 | Drive output M-1 in its own conduit. Shielded VFD-rated cable. Maintain shield and ground continuity. |
+| 6 | Signal and control cable S-1 in a separate conduit. Cross power at right angles. |
+| 7 | Cable wrap/loop at the azimuth joint (JB-1). Size for full travel. Verify at both stops before energizing. |
+| 8 | Spare 3/4" RMC with pull string. Cap and label. |
+| 9 | Bond conduits, boxes, MCU-1, and the motor frame to the structure grounding (GND-1). |
+
+#### 4.3.7 How to build these in Revit
+
+1. **Equipment schedule:** create a schedule of the **Electrical Equipment** category. Fields: Mark, Description, Rated voltage, Phase, Rated current, Location, Enclosure (shared parameter), Notes.
+2. **Circuit schedule:** create a schedule of the **Electrical Circuits** category. Fields: Circuit Number, Load Name, Voltage, Phase, Apparent Load/Current, Rating (breaker), Wire Size, Length, Voltage Drop, Notes. If circuits are not modeled, use a **Drafting View with a table** or a **Revit schedule with manual rows** and keep the tags identical to the plan.
+3. **Raceway schedule:** create a **Conduits** schedule. Fields: Mark (C-1 to C-7), Type, Size, Length, From, To, plus shared parameters for Wires Inside and Fill percent.
+4. **Panel schedule:** use **Create Panel Schedule** on PNL-OA (or a drafting-view table if electrical connectors are not modeled).
+5. **Keynotes:** add the keynote legend as a **Keynote Legend** and tag with **Keynote Tags**.
+6. **Sheet layout:** E-101 holds the plan, general notes, assumption note (4.2), keynotes, and the equipment and raceway schedules. E-201 (ACADE) holds the one-line diagram and circuit schedule. Put the voltage-drop summary on E-201 or keep it in the calculation package.
+
+#### 4.3.8 Items still marked TBD in the schedules
+
+- MCU model, input rating, maximum OCPD, fuse class, SCCR, and cable requirements.
+- Motor HP and voltage (5 HP at 208 V assumed). A holding brake adds a power circuit.
+- Source panel, available breaker space, and fault current.
+- Field-verified run lengths (150 ft feeder and 25/50 ft branches).
+- Site marine exposure (PVC-coated or stainless RMC) and the contract's UFC/NAVFAC criteria.
+- Rotating-joint method (cable wrap or slip ring) and rotation range.
+- SPD requirement from the lightning protection criteria.
+- Ground conductor size from the structure grounding design.
 
 ## 5. Open questions to close out (in order of impact)
 
